@@ -1,0 +1,297 @@
+<title>Look Twice</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Real photo or AI? 12 pictures, about 60 seconds. Test your eye.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one phone-sized column; each picture sits in a "proof frame" with crop marks and a contact-sheet strip, like a print under a loupe. */
+:root {
+  --paper: #e9ecef;        /* cool lab-paper ground */
+  --sheet: #f7f8fa;        /* raised surface */
+  --ink: #12161d;          /* text */
+  --muted: #5b6573;        /* secondary text, blue-grey */
+  --rule: #c9cfd7;         /* hairlines, crop marks */
+  --mark: #2438e8;         /* brand: ultramarine marker */
+  --real: #0b7a55;         /* verdict: real photo */
+  --ai: #c8233f;           /* verdict: AI */
+  --on-mark: #ffffff;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #12161c; --sheet: #1a2029; --ink: #e8ebf0; --muted: #98a3b3; --rule: #333c49;
+    --mark: #7d8bff; --real: #3cc792; --ai: #ff6b81; --on-mark: #0c0f14;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #12161c; --sheet: #1a2029; --ink: #e8ebf0; --muted: #98a3b3; --rule: #333c49;
+  --mark: #7d8bff; --real: #3cc792; --ai: #ff6b81; --on-mark: #0c0f14;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+.app { max-width: 460px; margin: 0 auto; padding-block: 18px 40px; display: flex; flex-direction: column; gap: 14px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.brand { font-family: var(--display); font-weight: 850; font-stretch: 112%; font-size: 22px; letter-spacing: -0.01em; margin: 0; }
+.brand span { color: var(--mark); }
+.counter { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+.progress { height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--mark); transition: width .25s ease; }
+.intro { margin: 0; font-size: 15px; color: var(--muted); text-wrap: balance; }
+.intro strong { color: var(--ink); font-weight: 600; }
+.challenge { margin: 0; padding: 10px 12px; border: 1px solid var(--mark); color: var(--ink); font-size: 15px; border-radius: 6px; }
+.challenge b { color: var(--mark); }
+
+/* proof frame */
+.proof { position: relative; padding: 14px; }
+.proof::before, .proof::after, .proof .c1, .proof .c2 { content: ""; position: absolute; width: 14px; height: 14px; border-color: var(--ink); border-style: solid; pointer-events: none; }
+.proof::before { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.proof::after { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.proof .c1 { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.proof .c2 { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+.frame { position: relative; aspect-ratio: 4 / 5; max-width: 100%; background: var(--sheet); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: zoom-in; }
+.frame img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; }
+.loupe { position: absolute; width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--sheet); box-shadow: 0 0 0 2px var(--mark), 0 10px 30px rgb(0 0 0 / .35); background-repeat: no-repeat; pointer-events: none; transform: translate(-50%, -50%); }
+.strip { display: flex; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 8px; }
+.hint { font-size: 13px; color: var(--muted); text-align: center; margin: 0; }
+
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.choice { font-family: var(--display); font-weight: 800; font-stretch: 105%; font-size: 21px; letter-spacing: 0.01em; padding: 18px 10px; border-radius: 8px; border: 2px solid currentColor; background: var(--sheet); cursor: pointer; transition: transform .08s ease, background .15s ease; }
+.choice small { display: block; font-family: var(--body); font-weight: 500; font-size: 12px; letter-spacing: 0; opacity: .8; margin-top: 2px; }
+.choice.real { color: var(--real); }
+.choice.ai { color: var(--ai); }
+.choice:active { transform: scale(.97); }
+.choice:focus-visible, .btn:focus-visible, .link:focus-visible { outline: 3px solid var(--mark); outline-offset: 2px; }
+
+/* analysing */
+.analysing { display: flex; flex-direction: column; align-items: center; gap: 16px; padding-block: 60px; text-align: center; }
+.analysing h2 { font-family: var(--display); font-weight: 800; font-stretch: 110%; font-size: 24px; margin: 0; }
+.scan { width: 100%; max-width: 320px; height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.scan i { display: block; height: 100%; width: 0; background: var(--mark); animation: fill 2.4s ease-in-out forwards; }
+@keyframes fill { to { width: 100%; } }
+.analysing p { margin: 0; font-family: var(--mono); font-size: 13px; color: var(--muted); min-height: 1.5em; }
+
+/* result */
+.result { display: flex; flex-direction: column; gap: 18px; }
+.score { display: flex; align-items: baseline; gap: 10px; }
+.score b { font-family: var(--display); font-weight: 900; font-stretch: 125%; font-size: 88px; line-height: .9; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.score span { font-family: var(--mono); font-size: 15px; color: var(--muted); }
+.type { margin: 0; font-family: var(--display); font-weight: 800; font-stretch: 100%; font-size: 30px; line-height: 1.1; text-wrap: balance; }
+.type em { font-style: normal; color: var(--mark); }
+.blurb { margin: 0; color: var(--muted); max-width: 60ch; }
+.grid { font-size: 22px; letter-spacing: 2px; line-height: 1.2; word-break: break-all; }
+.actions { display: grid; gap: 10px; }
+.btn { font: 600 16px/1.2 var(--body); padding: 15px 16px; border-radius: 8px; border: 2px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; text-align: center; }
+.btn.primary { background: var(--mark); border-color: var(--mark); color: var(--on-mark); }
+.btn .price { font-family: var(--mono); font-weight: 500; opacity: .85; }
+.toast { font-size: 14px; color: var(--real); margin: 0; min-height: 1.4em; text-align: center; }
+.sample { border-top: 1px solid var(--rule); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.free-note { margin: 0; padding: 10px 12px; background: var(--sheet); border-radius: 6px; font-size: 14px; }
+
+.answers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 28px; }
+.answer { display: flex; flex-direction: column; gap: 8px; }
+.shot { position: relative; max-width: 100%; overflow: hidden; border-radius: 4px; }
+.shot img { width: 100%; height: auto; display: block; border-radius: 4px; background: var(--sheet); }
+.ring { position: absolute; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); border: 3px solid var(--ai); box-shadow: 0 0 0 2px rgb(255 255 255 / .85), 0 0 0 9999px rgb(0 0 0 / .28); animation: ring-in .6s ease-out both; }
+.ring + .ring { box-shadow: 0 0 0 2px rgb(255 255 255 / .85); }
+.ring b { position: absolute; top: -12px; right: -12px; width: 24px; height: 24px; border-radius: 50%; background: var(--ai); color: #fff; font: 700 13px/24px var(--mono); text-align: center; }
+@keyframes ring-in { from { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } }
+.closeups { display: flex; gap: 10px; align-items: center; }
+.closeup { width: 112px; height: 112px; flex: none; border-radius: 50%; border: 3px solid var(--ai); background-repeat: no-repeat; background-color: var(--sheet); position: relative; }
+.closeup b { position: absolute; bottom: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: var(--ai); color: #fff; font: 700 13px/24px var(--mono); text-align: center; }
+.closeups p { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.answer .verdict { font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; display: flex; gap: 8px; flex-wrap: wrap; }
+.answer .verdict .r { color: var(--real); } .answer .verdict .a { color: var(--ai); }
+.answer .verdict .you { color: var(--muted); }
+.answer h3 { margin: 2px 0 2px; font-size: 15px; font-weight: 600; }
+.answer p { margin: 0; font-size: 14px; color: var(--muted); }
+.answer .credit { font-size: 11.5px; margin-top: 4px; }
+.answer .credit a { color: var(--muted); }
+footer { border-top: 1px solid var(--rule); padding-top: 14px; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+footer a, .link { color: var(--muted); }
+.again { background: none; border: 0; padding: 0; font: inherit; color: var(--mark); text-decoration: underline; cursor: pointer; justify-self: center; }
+@media (prefers-reduced-motion: reduce) { .scan i { animation: none; width: 100%; } .progress i { transition: none; } }
+</style>
+
+<div class="app" id="app">
+  <header>
+    <p class="brand">Look <span>Twice</span></p>
+    <span class="counter" id="counter">TEST #1</span>
+  </header>
+  <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+  <main id="screen"></main>
+  <footer id="foot">
+    <span>A free test by Look Twice, made with Zoomed In (YouTube @zoomedinshow). Picture credits are listed with the answers.</span>
+    <span>Privacy: no cookies and no accounts. Your answers stay on your device. We only count anonymous totals (pages opened, tests started, finished and shared) with abacus.jasoncameron.dev, which sees your IP address like any website you load.</span>
+  </footer>
+</div>
+
+<script>
+const TEST_NO = 1;
+const SITE = "aramille1.github.io/looktwice";
+const ITEMS = [{"src": "img/01.jpg", "answer": "real", "title": "Mandarin duck", "giveaway": "A male mandarin duck's orange \"whiskers\" and painted-looking face are real feathers.", "author": "Francis C. Franklin", "licence": "CC BY-SA 3.0", "licence_url": "https://creativecommons.org/licenses/by-sa/3.0", "source_url": "https://commons.wikimedia.org/wiki/File:Aix_galericulata_male_portrait.jpg", "ar": 0.8889, "spots": []}, {"src": "img/02.jpg", "answer": "ai", "title": "Italian beach huts", "giveaway": "A sign reads \"DOCE CABINE\"; the Italian word for showers is \"docce\".", "author": "Gemini (AI)", "licence": "Public domain (PD-algorithm; uploader also offers CC BY-SA 3.0 IT)", "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-algorithm", "source_url": "https://commons.wikimedia.org/wiki/File:Cabine_balneari.jpg", "ar": 0.5459, "spots": [{"x": 89, "y": 51, "r": 9}]}, {"src": "img/03.jpg", "answer": "real", "title": "Frozen soap bubble", "giveaway": "Ice crystals feathering across a soap bubble frozen in sub-zero air; a perfect sphere that looks CGI.", "author": "Ammi Berglund from Osby, Sweden.", "licence": "CC BY 2.0", "licence_url": "https://creativecommons.org/licenses/by/2.0", "source_url": "https://commons.wikimedia.org/wiki/File:Frozen_soap_bubble_on_a_frosty_branch.jpg", "ar": 0.6667, "spots": []}, {"src": "img/04.jpg", "answer": "ai", "title": "Glass of Normandy cider", "giveaway": "The small print under \"CIDRE PAYS D'AUGE\" on the glass is meaningless squiggles.", "author": "Adobe Firefly (AI)", "licence": "Public domain (PD-algorithm; uploader also released CC0)", "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-algorithm", "source_url": "https://commons.wikimedia.org/wiki/File:Cidre-pays-d-auge-aop.png", "ar": 1.0, "spots": [{"x": 51, "y": 38, "r": 9}]}, {"src": "img/05.jpg", "answer": "real", "title": "Car on a mirror", "giveaway": "A thin layer of water on the Salar de Uyuni makes a flawless mirror, so the car seems to float.", "author": "Christopher Crouzet", "licence": "CC BY-SA 4.0", "licence_url": "https://creativecommons.org/licenses/by-sa/4.0", "source_url": "https://commons.wikimedia.org/wiki/File:Reflection_on_the_Salar_de_Uyuni,_bolivia_cropped.jpg", "ar": 0.6111, "spots": []}, {"src": "img/06.jpg", "answer": "ai", "title": "Clifftop hotel by the sea", "giveaway": "The diners on the terrace are melted smudges, and no two floors of windows line up.", "author": "Dennis Sylvester Hurd", "licence": "CC BY 4.0", "licence_url": "https://creativecommons.org/licenses/by/4.0", "source_url": "https://commons.wikimedia.org/wiki/File:Hotel_on_the_Coast_-_Flickr_-_Dennis_S._Hurd.jpg", "ar": 0.7769, "spots": [{"x": 56, "y": 69, "r": 8}]}, {"src": "img/07.jpg", "answer": "ai", "title": "Old tailor at the window", "giveaway": "He holds a lone gold scissor blade while a second, handle-less pair of scissors lies on the cloth.", "author": "FLUX via ComfyUI (AI)", "licence": "Public domain (PD-algorithm; uploader also offers CC BY 4.0)", "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-algorithm", "source_url": "https://commons.wikimedia.org/wiki/File:FLUX_P2-2.png", "ar": 0.75, "spots": [{"x": 55, "y": 72, "r": 7}, {"x": 46, "y": 66, "r": 5}]}, {"src": "img/08.jpg", "answer": "real", "title": "Leaf-tailed gecko", "giveaway": "The satanic leaf-tailed gecko mimics a dead leaf so well it looks like a botched render.", "author": "Charles J. Sharp", "licence": "CC BY-SA 4.0", "licence_url": "https://creativecommons.org/licenses/by-sa/4.0", "source_url": "https://commons.wikimedia.org/wiki/File:Satanic_leaf-tailed_gecko_(Uroplatus_phantasticus)_Ranomafana_4.jpg", "ar": 0.6667, "spots": []}, {"src": "img/09.jpg", "answer": "ai", "title": "Roast leg of lamb", "giveaway": "The bone sprouts out of the meat with no joint, and the garlic cloves are as big as potatoes.", "author": "ChatGPT (AI)", "licence": "Public domain (PD-algorithm; uploader also released CC0)", "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-algorithm", "source_url": "https://commons.wikimedia.org/wiki/File:Gigot.png", "ar": 0.6667, "spots": [{"x": 84, "y": 17, "r": 9}, {"x": 59, "y": 79, "r": 7}]}, {"src": "img/10.jpg", "answer": "real", "title": "Library with wave shelves", "giveaway": "Tianjin Binhai Library is real; the white wave-shaped shelves and giant sphere look like a 3D render.", "author": "Muzzleflash", "licence": "CC0", "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en", "source_url": "https://commons.wikimedia.org/wiki/File:Binhai_library_bookshelves.jpg", "ar": 1.3333, "spots": []}, {"src": "img/11.jpg", "answer": "ai", "title": "Hedgehog under leaves", "giveaway": "There are no spines anywhere: the leaf pile turns straight into soft fur around the face.", "author": "ChatGPT (AI)", "licence": "Public domain (PD-algorithm; uploader also released CC0)", "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-algorithm", "source_url": "https://commons.wikimedia.org/wiki/File:Egel_verstopt_tussen_herfstbladeren.png", "ar": 0.6667, "spots": [{"x": 55, "y": 57, "r": 11}]}, {"src": "img/12.jpg", "answer": "real", "title": "Hedgehog by a mossy tree", "giveaway": "The soft focus and storybook mossy stump look staged, but every spine and whisker is consistent.", "author": "Hrald", "licence": "CC BY-SA 3.0", "licence_url": "https://creativecommons.org/licenses/by-sa/3.0", "source_url": "https://commons.wikimedia.org/wiki/File:West_European_Hedgehog_(Erinaceus_europaeus)1.jpg", "ar": 0.6648, "spots": []}];
+const TYPES = [
+  [12, "Forensic Eye", "Twelve out of twelve. Nothing gets past you. People should send you their links before they share them."],
+  [10, "Sharp Eye", "You catch almost everything. The ones that got you are the ones fooling millions right now."],
+  [7, "Second Glancer", "You spot the obvious fakes and miss the good ones. That puts you with most people, and the good ones are getting better."],
+  [4, "Easily Charmed", "Your eye trusts what looks right. Fakes are built to look right, so that's exactly what they aim for."],
+  [0, "Fully Fooled", "The fakes won this round. The giveaways are learnable, and the breakdown shows every one."]
+];
+const $ = (s, el = document) => el.querySelector(s);
+const screen = $("#screen"), bar = $("#bar"), counter = $("#counter");
+// Anonymous event counts (no cookies, no IDs): one counter per event name, read back with /get/.
+const COUNT_NS = "looktwice-t1";
+const counted = new Set();
+const track = (name, once = false) => {
+  if (once && counted.has(name)) return;
+  counted.add(name);
+  if (!/github\.io$|looktwice\./.test(location.hostname)) return;  // only count the live site
+  try { fetch(`https://abacus.jasoncameron.dev/hit/${COUNT_NS}/${encodeURIComponent(name)}`, { mode: "cors", keepalive: true }).catch(() => {}); } catch (e) {}
+};
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+let answers = [], idx = 0;
+const params = new URLSearchParams(location.search);
+const friend = /^\d{1,2}$/.test(params.get("c") || "") ? Math.min(+params.get("c"), ITEMS.length) : null;
+
+function setProgress() {
+  bar.style.width = (idx / ITEMS.length * 100) + "%";
+  counter.textContent = idx < ITEMS.length ? `TEST #${TEST_NO} · ${String(idx + 1).padStart(2, "0")} / ${ITEMS.length}` : `TEST #${TEST_NO}`;
+}
+
+function question() {
+  setProgress();
+  const it = ITEMS[idx];
+  const first = idx === 0;
+  screen.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      ${first && friend !== null ? `<p class="challenge">A friend scored <b>${friend}/${ITEMS.length}</b>. Can you beat them?</p>` : ""}
+      ${first ? `<p class="intro"><strong>Real photo or made by AI?</strong> ${ITEMS.length} pictures, about a minute. Free score at the end.</p>` : ""}
+      <div class="proof"><span class="c1"></span><span class="c2"></span>
+        <div class="frame" id="frame"><img id="pic" src="${it.src}" alt="Picture ${idx + 1}: real or AI?" draggable="false"></div>
+        <div class="strip"><span>Frame ${String(idx + 1).padStart(2, "0")}</span><span>Hold to zoom</span></div>
+      </div>
+      <div class="choices">
+        <button class="choice real" id="btn-real" data-a="real">REAL<small>a photograph</small></button>
+        <button class="choice ai" id="btn-ai" data-a="ai">AI<small>generated</small></button>
+      </div>
+    </div>`;
+  if (first) track("start");
+  loupe($("#frame"), it.src);
+  screen.querySelectorAll(".choice").forEach(b => b.addEventListener("click", () => {
+    answers[idx] = b.dataset.a;
+    idx++;
+    if (idx < ITEMS.length) { const n = new Image(); n.src = ITEMS[idx].src; question(); } else analysing();
+  }));
+  if (ITEMS[idx + 1]) { const n = new Image(); n.src = ITEMS[idx + 1].src; }
+}
+
+function loupe(frame, src) {
+  let lens = null;
+  const Z = 2.6;
+  const move = (e) => {
+    const r = frame.getBoundingClientRect();
+    const x = Math.max(0, Math.min(r.width, e.clientX - r.left)), y = Math.max(0, Math.min(r.height, e.clientY - r.top));
+    lens.style.left = x + "px";
+    lens.style.top = (y - (e.pointerType === "touch" ? 70 : 0)) + "px";
+    lens.style.backgroundSize = (r.width * Z) + "px " + (r.height * Z) + "px";
+    lens.style.backgroundPosition = (75 - x * Z) + "px " + (75 - y * Z) + "px";
+  };
+  frame.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    lens = document.createElement("div"); lens.className = "loupe";
+    lens.style.backgroundImage = `url("${src}")`;
+    frame.appendChild(lens); frame.setPointerCapture(e.pointerId); move(e);
+    track("zoom", true);
+  });
+  frame.addEventListener("pointermove", (e) => { if (lens) move(e); });
+  const end = () => { if (lens) { lens.remove(); lens = null; } };
+  frame.addEventListener("pointerup", end); frame.addEventListener("pointercancel", end);
+}
+
+function analysing() {
+  setProgress();
+  const lines = ["Checking your answers", "Comparing with the originals", "Working out your eye type"];
+  screen.innerHTML = `<div class="analysing"><h2>Looking twice…</h2><div class="scan"><i></i></div><p id="aline">${lines[0]}</p></div>`;
+  let k = 0;
+  const t = setInterval(() => { k++; if (k < lines.length) $("#aline").textContent = lines[k]; }, 800);
+  setTimeout(() => { clearInterval(t); result(); }, 2500);
+}
+
+function score() { return ITEMS.reduce((s, it, i) => s + (answers[i] === it.answer ? 1 : 0), 0); }
+
+function result() {
+  const s = score(), n = ITEMS.length;
+  const [, name, blurb] = TYPES.find(([min]) => s >= min);
+  const squares = ITEMS.map((it, i) => answers[i] === it.answer ? "🟩" : "🟥").join("");
+  const shareUrl = `https://${SITE}/?c=${s}`;
+  const shareText = `Look Twice #${TEST_NO}: ${s}/${n}, ${name}\n${squares}\nReal or AI? Beat me: ${shareUrl}`;
+  track("finish-" + s);
+  store.set("lt-" + TEST_NO, JSON.stringify({ s, answers }));
+  screen.innerHTML = `
+    <section class="result">
+      <div class="score"><b>${s}/${n}</b><span>correct</span></div>
+      <h2 class="type">Your eye type: <em>${name}</em></h2>
+      <p class="blurb">${blurb}</p>
+      <div class="grid" aria-label="Your answers: green right, red wrong">${squares}</div>
+      <div class="actions">
+        <button class="btn primary" id="share">Challenge a friend</button>
+      </div>
+      <p class="toast" id="toast" role="status"></p>
+      <div class="sample">
+        <p class="eyebrow">How to spot them</p>
+        <h2 class="type" style="font-size:24px">Every picture, and what gives it away</h2>
+        <ul class="answers">${ITEMS.map((_, i) => answerRow(i)).join("")}</ul>
+      </div>
+      <button class="btn primary" id="share2">Challenge a friend</button>
+      <button class="again" id="again">Take the test again</button>
+    </section>`;
+  const share = async (where) => {
+    track("share-" + where);
+    if (navigator.share) { try { await navigator.share({ text: shareText }); return; } catch (e) { if (e.name === "AbortError") return; } }
+    try { await navigator.clipboard.writeText(shareText); $("#toast").textContent = "Copied. Paste it to a friend."; }
+    catch (e) { $("#toast").textContent = shareText; }
+  };
+  $("#share").addEventListener("click", () => share("top"));
+  $("#share2").addEventListener("click", () => { share("bottom"); });
+  $("#again").addEventListener("click", () => { answers = []; idx = 0; question(); window.scrollTo(0, 0); });
+}
+
+function answerRow(i) {
+  const it = ITEMS[i], you = answers[i], ok = you === it.answer;
+  const lab = (a) => a === "real" ? `<span class="r">Real photo</span>` : `<span class="a">AI</span>`;
+  const spots = it.spots || [];
+  const rings = spots.map((s, k) => `<span class="ring" style="left:${s.x}%;top:${s.y}%;width:${s.r * 2}%;animation-delay:${.2 + k * .25}s">${spots.length > 1 ? `<b>${k + 1}</b>` : ""}</span>`).join("");
+  const closeups = spots.length ? `<div class="closeups">${spots.map((s, k) => `<div class="closeup" style="${closeupStyle(it, s)}">${spots.length > 1 ? `<b>${k + 1}</b>` : ""}</div>`).join("")}<p>Zoomed in<br>on the giveaway</p></div>` : "";
+  return `<li class="answer">
+    <div class="verdict">${lab(it.answer)}<span class="you">You said ${you === "real" ? "real" : "AI"} ${ok ? "✓" : "✗"}</span></div>
+    <div class="shot"><img src="${it.src}" alt="${esc(it.title)}">${rings}</div>
+    ${closeups}
+    <div><h3>${esc(it.title)}</h3><p>${esc(it.giveaway)}</p>
+    <p class="credit">${esc(it.author)}, <a href="${esc(it.licence_url)}" target="_blank" rel="noopener">${esc(it.licence)}</a>, <a href="${esc(it.source_url)}" target="_blank" rel="noopener">Wikimedia Commons</a></p></div></li>`;
+}
+
+// A round close-up centred on a spot: the image is scaled so the spot's circle fills the window.
+function closeupStyle(it, s) {
+  const Z = Math.max(2.2, 100 / (s.r * 2) * 0.9);     // zoom so the ring roughly fills the circle
+  const bgW = Z, bgH = Z * it.ar;                    // in units of the window width (window is square)
+  const px = (0.5 - (s.x / 100) * bgW) / (1 - bgW) * 100;
+  const py = (0.5 - (s.y / 100) * bgH) / (1 - bgH) * 100;
+  return `background-image:url('${it.src}');background-size:${bgW * 100}% ${bgH * 100}%;background-position:${px}% ${py}%`;
+}
+
+const src = (params.get("s") || (friend !== null ? "friend" : document.referrer ? "ref" : "direct")).replace(/[^a-z0-9-]/gi, "").slice(0, 20);
+track("visit-" + src);
+question();
+</script>
