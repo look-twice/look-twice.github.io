@@ -1,6 +1,6 @@
 """Build Look Twice test pages from images/manifest.json.
 
-  python3 build.py            -> site/index.html (images referenced from site/img/) and preview.html (images inlined)
+  python3 build.py            -> docs/index.html (images referenced from docs/img/) and preview.html (images inlined)
 Picks 12 items: 6 real + 6 AI, two easy ones first, then medium, hard last, answers mixed.
 """
 import base64
@@ -30,7 +30,7 @@ def extra(m):
     w, h = Image.open(ROOT / "images" / m["file"]).size
     return {"ar": round(h / w, 4), "spots": m.get("spots", [])}
 
-site = ROOT / "site"
+site = ROOT / "docs"
 (site / "img").mkdir(parents=True, exist_ok=True)
 web = []
 for i, m in enumerate(items, 1):
