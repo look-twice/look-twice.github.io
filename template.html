@@ -132,7 +132,7 @@ footer a, .link { color: var(--muted); }
   <main id="screen"></main>
   <footer id="foot">
     <span>A free test by Look Twice, made with Zoomed In (YouTube @zoomedinshow). Picture credits are listed with the answers.</span>
-    <span>Privacy: no cookies and no accounts. Your answers stay on your device. We only count anonymous totals (pages opened, tests started, finished and shared) with abacus.jasoncameron.dev, which sees your IP address like any website you load.</span>
+    <span>Privacy: no cookies and no accounts. Your answers stay on your device. We only count anonymous totals (pages opened, tests started, finished and shared) with GoatCounter, a privacy-friendly counter that sees your IP address like any website you load but does not store it.</span>
   </footer>
 </div>
 
@@ -149,14 +149,20 @@ const TYPES = [
 ];
 const $ = (s, el = document) => el.querySelector(s);
 const screen = $("#screen"), bar = $("#bar"), counter = $("#counter");
-// Anonymous event counts (no cookies, no IDs): one counter per event name, read back with /get/.
-const COUNT_NS = "looktwice-t1";
-const counted = new Set();
+// Anonymous counts with GoatCounter (no cookies, no IDs). Page views are counted by count.js itself;
+// each step of the test is sent as an event with a readable name, so the dashboard reads like a funnel.
+const LABELS = { start: "2 started the test", giveaways: "4 read the giveaways", zoom: "used the zoom" };
+const label = (n) => LABELS[n] || (n.startsWith("visit-") ? "1 came from " + n.slice(6)
+  : n.startsWith("finish-") ? "score " + n.slice(7).padStart(2, "0") + " of 12"
+  : n.startsWith("share-") ? "5 challenged a friend" : n);
+const counted = new Set(), queue = [];
+const send = (path) => { const gc = window.goatcounter; if (gc && gc.count) gc.count({ path, title: path, event: true }); else queue.push(path); };
+const flush = () => { while (queue.length && window.goatcounter && window.goatcounter.count) send(queue.shift()); };
 const track = (name, once = false) => {
   if (once && counted.has(name)) return;
   counted.add(name);
   if (!/github\.io$|looktwice\./.test(location.hostname)) return;  // only count the live site
-  try { fetch(`https://abacus.jasoncameron.dev/hit/${COUNT_NS}/${encodeURIComponent(name)}`, { mode: "cors", keepalive: true }).catch(() => {}); } catch (e) {}
+  try { send(label(name)); if (name.startsWith("finish-")) send("3 saw their result"); } catch (e) {}
 };
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -300,3 +306,4 @@ const src = (params.get("s") || (friend !== null ? "friend" : document.referrer 
 track("visit-" + src);
 question();
 </script>
+<script data-goatcounter="https://looktwice.goatcounter.com/count" async src="https://gc.zgo.at/count.js" onload="flush()"></script>
