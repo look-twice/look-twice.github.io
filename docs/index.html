@@ -193,10 +193,10 @@ function question() {
         <button class="choice ai" id="btn-ai" data-a="ai">AI<small>generated</small></button>
       </div>
     </div>`;
-  if (first) track("start");
   loupe($("#frame"), it.src);
   screen.querySelectorAll(".choice").forEach(b => b.addEventListener("click", () => {
     answers[idx] = b.dataset.a;
+    if (idx === 0) track("start", true);  // started = answered the first picture, not just opened the page
     idx++;
     if (idx < ITEMS.length) { const n = new Image(); n.src = ITEMS[idx].src; question(); } else analysing();
   }));
